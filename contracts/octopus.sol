@@ -21,8 +21,14 @@ contract OCGT {
     mapping(uint256 => Player[]) matchIdToPlayers;
     mapping(uint256 => Player) matchIdToWinner;
 
+    modifier ownAble() {
+        require(msg.sender == address(0));
+        _;
+    }
+
     function startNewMatch(string memory _startTime, uint256 _playerLimit)
         public
+        ownAble
     {
         uint256 index = matches.length;
         currentMatch = Match(_startTime, _playerLimit, index);
@@ -45,7 +51,7 @@ contract OCGT {
         uint256 _matchId,
         string memory _color,
         string memory _lucky
-    ) public {
+    ) public payable {
         address _ad = msg.sender;
         Player[] storage players = matchIdToPlayers[_matchId];
         players.push(Player(_ad, _matchId, _color, _lucky));
