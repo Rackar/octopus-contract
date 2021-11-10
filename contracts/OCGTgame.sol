@@ -1,6 +1,8 @@
 pragma solidity ^0.8.3;
 
 // SPDX-License-Identifier: MIT
+import "./OCGTtoken.sol";
+
 contract Ownable {
   address public owner;
 
@@ -36,7 +38,12 @@ contract Ownable {
 
 }
 
-contract OCGT is Ownable {
+contract OCGTgame is Ownable {
+    OCGTtoken public token;
+
+    constructor()  {
+        token = new OCGTtoken();
+    }
     struct Player {
         address userAddress;
         uint256 matchId;
@@ -100,7 +107,9 @@ contract OCGT is Ownable {
         string memory _color,
         string memory _lucky
     ) public payable {
+        require(msg.value == 0.00001 ether);
         address _ad = msg.sender;
+
         Player[] storage players = matchIdToPlayers[_matchId];
         players.push(Player(_ad, _matchId, _color, _lucky));
         // matchIdToPlayers[_matchId] = players;
@@ -113,3 +122,4 @@ contract OCGT is Ownable {
         return winner;
     }
 }
+
