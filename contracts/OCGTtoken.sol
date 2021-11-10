@@ -5,6 +5,6 @@ import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
 contract OCGTtoken is ERC20 {
     constructor() ERC20("OctopusGameToken", "OCGT") {
-        _mint(msg.sender, 1000000 * (10**uint256(decimals())));
+        _mint(msg.sender, 100 * 1000 * 1000 * (10**uint256(decimals())));
     }
 }

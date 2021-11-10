@@ -4,46 +4,49 @@ pragma solidity ^0.8.3;
 import "./OCGTtoken.sol";
 
 contract Ownable {
-  address public owner;
+    address public owner;
 
-  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+    event OwnershipTransferred(
+        address indexed previousOwner,
+        address indexed newOwner
+    );
 
-  /**
-   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
-   * account.
-   */
-  constructor()  {
-    owner = msg.sender;
-  }
+    /**
+     * @dev The Ownable constructor sets the original `owner` of the contract to the sender
+     * account.
+     */
+    constructor() {
+        owner = msg.sender;
+    }
 
+    /**
+     * @dev Throws if called by any account other than the owner.
+     */
+    modifier onlyOwner() {
+        require(msg.sender == owner);
+        _;
+    }
 
-  /**
-   * @dev Throws if called by any account other than the owner.
-   */
-  modifier onlyOwner() {
-    require(msg.sender == owner);
-    _;
-  }
-
-
-  /**
-   * @dev Allows the current owner to transfer control of the contract to a newOwner.
-   * @param newOwner The address to transfer ownership to.
-   */
-  function transferOwnership(address newOwner) public onlyOwner {
-    require(newOwner != address(0));
-    emit OwnershipTransferred(owner, newOwner);
-    owner = newOwner;
-  }
-
+    /**
+     * @dev Allows the current owner to transfer control of the contract to a newOwner.
+     * @param newOwner The address to transfer ownership to.
+     */
+    function transferOwnership(address newOwner) public onlyOwner {
+        require(newOwner != address(0));
+        emit OwnershipTransferred(owner, newOwner);
+        owner = newOwner;
+    }
 }
 
 contract OCGTgame is Ownable {
     OCGTtoken public token;
+    bool canMintCoin;
 
-    constructor()  {
+    constructor() {
         token = new OCGTtoken();
+        canMintCoin = true;
     }
+
     struct Player {
         address userAddress;
         uint256 matchId;
@@ -63,33 +66,64 @@ contract OCGTgame is Ownable {
 
     mapping(uint256 => Player[]) matchIdToPlayers;
     mapping(uint256 => Player) matchIdToWinner;
+    mapping(address => uint256) unClaimCoinInMint;
 
-    function startNewMatch( uint256 _allowJoinStartTime,uint256 _allowJoinEndTime,uint256 _gamePlanStartTime, uint256 _playerLimit)
-        public onlyOwner
-    {
+    /*
+    manager part
+    */
+
+    function switchMint() public onlyOwner {
+        canMintCoin = !canMintCoin;
+    }
+
+    function startNewMatch(
+        uint256 _allowJoinStartTime,
+        uint256 _allowJoinEndTime,
+        uint256 _gamePlanStartTime,
+        uint256 _playerLimit
+    ) public onlyOwner {
         require(_allowJoinStartTime < _allowJoinEndTime);
         require(_allowJoinEndTime < _gamePlanStartTime);
         require(_allowJoinEndTime > block.timestamp);
-        uint256 index = matches.length+1;
-        currentMatch = Match(_allowJoinStartTime,_allowJoinEndTime,_gamePlanStartTime, _playerLimit, index);
+        uint256 index = matches.length + 1;
+        currentMatch = Match(
+            _allowJoinStartTime,
+            _allowJoinEndTime,
+            _gamePlanStartTime,
+            _playerLimit,
+            index
+        );
         matches.push(currentMatch);
+    }
+
+    /*
+    user part
+    */
+
+    function mintCoin(uint256 _power) public payable {
+        require(canMintCoin, "Can not mint yet");
+        require(msg.value >= 0.001 ether, "value wrong");
+        unClaimCoinInMint[msg.sender] += _power;
+    }
+
+    function claimMintCoin(uint256 _amount) public {
+        require(
+            unClaimCoinInMint[msg.sender] <= token.balanceOf(address(this)),
+            "pool not enough"
+        );
+        require(_amount <= unClaimCoinInMint[msg.sender], "your not enough");
+        token.transfer(msg.sender, _amount);
     }
 
     function getCurentMatchId() public view returns (uint256) {
         uint256 limitTime = currentMatch.gamePlanStartTime;
-        if( block.timestamp >= limitTime) {
+        if (block.timestamp >= limitTime) {
             return 0;
-        }else{
+        } else {
             return currentMatch.matchId;
         }
     }
 
-    function getNow() public view returns (uint256) {
-        return block.timestamp;
-    }
-
-        
-    
     function getCurrentMatch() public view returns (Match memory) {
         return currentMatch;
     }
@@ -121,5 +155,15 @@ contract OCGTgame is Ownable {
         matchIdToWinner[_matchId] = winner;
         return winner;
     }
-}
 
+    /*
+    test part
+    */
+    function getBalance(address _user) public view returns (uint256) {
+        return token.balanceOf(_user);
+    }
+
+    function getNow() public view returns (uint256) {
+        return block.timestamp;
+    }
+}
