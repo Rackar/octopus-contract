@@ -1,8 +1,42 @@
 pragma solidity ^0.8.3;
 
 // SPDX-License-Identifier: MIT
+contract Ownable {
+  address public owner;
 
-contract OCGT {
+  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+
+  /**
+   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
+   * account.
+   */
+  constructor()  {
+    owner = msg.sender;
+  }
+
+
+  /**
+   * @dev Throws if called by any account other than the owner.
+   */
+  modifier onlyOwner() {
+    require(msg.sender == owner);
+    _;
+  }
+
+
+  /**
+   * @dev Allows the current owner to transfer control of the contract to a newOwner.
+   * @param newOwner The address to transfer ownership to.
+   */
+  function transferOwnership(address newOwner) public onlyOwner {
+    require(newOwner != address(0));
+    emit OwnershipTransferred(owner, newOwner);
+    owner = newOwner;
+  }
+
+}
+
+contract OCGT is Ownable {
     struct Player {
         address userAddress;
         uint256 matchId;
@@ -10,7 +44,9 @@ contract OCGT {
         string lucky;
     }
     struct Match {
-        string startTime;
+        uint256 allowJoinStartTime;
+        uint256 allowJoinEndTime;
+        uint256 gamePlanStartTime;
         uint256 playerLimit;
         uint256 matchId;
     }
@@ -21,20 +57,32 @@ contract OCGT {
     mapping(uint256 => Player[]) matchIdToPlayers;
     mapping(uint256 => Player) matchIdToWinner;
 
-    modifier ownAble() {
-        require(msg.sender == address(0));
-        _;
-    }
-
-    function startNewMatch(string memory _startTime, uint256 _playerLimit)
-        public
-        ownAble
+    function startNewMatch( uint256 _allowJoinStartTime,uint256 _allowJoinEndTime,uint256 _gamePlanStartTime, uint256 _playerLimit)
+        public onlyOwner
     {
-        uint256 index = matches.length;
-        currentMatch = Match(_startTime, _playerLimit, index);
+        require(_allowJoinStartTime < _allowJoinEndTime);
+        require(_allowJoinEndTime < _gamePlanStartTime);
+        require(_allowJoinEndTime > block.timestamp);
+        uint256 index = matches.length+1;
+        currentMatch = Match(_allowJoinStartTime,_allowJoinEndTime,_gamePlanStartTime, _playerLimit, index);
         matches.push(currentMatch);
     }
 
+    function getCurentMatchId() public view returns (uint256) {
+        uint256 limitTime = currentMatch.gamePlanStartTime;
+        if( block.timestamp >= limitTime) {
+            return 0;
+        }else{
+            return currentMatch.matchId;
+        }
+    }
+
+    function getNow() public view returns (uint256) {
+        return block.timestamp;
+    }
+
+        
+    
     function getCurrentMatch() public view returns (Match memory) {
         return currentMatch;
     }
