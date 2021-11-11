@@ -68,6 +68,29 @@ contract OCGTgame is Ownable {
     mapping(uint256 => Player) matchIdToWinner;
     mapping(address => uint256) unClaimCoinInMint;
 
+    mapping(address => uint256) ethBalance;
+
+    /*
+    payable part
+    */
+
+    function deposit() public payable {
+        // require(msg.value >= 0);
+        // require(canMintCoin);
+        // token.mint(msg.sender, msg.value);
+        ethBalance[msg.sender] += msg.value;
+    }
+
+    function withdraw() public {
+        // payable(msg.sender, token.balanceOf(msg.sender));
+        payable(msg.sender).transfer(ethBalance(msg.sender));
+        ethBalance[msg.sender] = 0;
+    }
+
+    function balance() public view returns (uint256) {
+        return address(this).balance;
+    }
+
     /*
     manager part
     */
