@@ -62,9 +62,18 @@ contract OCGTgame is Ownable {
         uint256 matchId;
     }
 
+    struct MatchResult {
+        uint256 matchId;
+        uint256 pool;
+        address winner;
+        string color;
+        string lucky;
+    }
+
     Match[] public matches;
     Match currentMatch;
 
+    mapping(address => bool) public allPlayers;
     mapping(uint256 => Player[]) matchIdToPlayers;
     mapping(uint256 => Player) matchIdToWinner;
     mapping(address => uint256) unClaimCoinInMint;
@@ -100,6 +109,33 @@ contract OCGTgame is Ownable {
     manager part
     *******************************/
 
+    event MatchCreated(
+        uint256 allowJoinStartTime,
+        uint256 allowJoinEndTime,
+        uint256 gamePlanStartTime,
+        uint256 playerLimit,
+        uint256 matchId
+    );
+
+    event MatchJoined(
+        uint256 matchId,
+        address userAddress,
+        string color,
+        string lucky
+    );
+
+    event MatchStarted(uint256 matchId, uint256 gamePlanStartTime);
+
+    event MatchEnded(
+        uint256 matchId,
+        uint256 pool,
+        address winner,
+        string color,
+        string lucky
+    );
+
+    event InviteSuccess(address invitingAddress, address invitedAddress);
+
     function changeMintGap(uint256 _gap) public onlyOwner {
         mintGapSecond = _gap;
     }
@@ -116,7 +152,7 @@ contract OCGTgame is Ownable {
         token.approve(_user, _amount);
     }
 
-    function startNewMatch(
+    function createNewMatch(
         uint256 _allowJoinStartTime,
         uint256 _allowJoinEndTime,
         uint256 _gamePlanStartTime,
@@ -134,6 +170,25 @@ contract OCGTgame is Ownable {
             index
         );
         matches.push(currentMatch);
+
+        emit MatchCreated(
+            _allowJoinStartTime,
+            _allowJoinEndTime,
+            _gamePlanStartTime,
+            _playerLimit,
+            index
+        );
+    }
+
+    function startBattle(uint256 _matchId)
+        public
+        onlyOwner
+        returns (Player memory)
+    {
+        Player[] memory players = matchIdToPlayers[_matchId];
+        Player memory winner = players[0];
+        matchIdToWinner[_matchId] = winner;
+        return winner;
     }
 
     /*******************************
@@ -142,7 +197,7 @@ contract OCGTgame is Ownable {
 
     event MintCoin(address _user, uint256 _startTime, uint256 _power);
 
-    function mintCoin(uint256 _power) public payable {
+    function mintCoin(uint256 _power, address _whoInviteMe) public payable {
         uint256 timeNow = block.timestamp;
         require(canMintCoin, "Can not mint yet");
         require(msg.value >= 0.001 ether, "value wrong");
@@ -153,6 +208,17 @@ contract OCGTgame is Ownable {
         userMintStartTime[msg.sender] = timeNow;
         unClaimCoinInMint[msg.sender] += _power;
         emit MintCoin(msg.sender, timeNow, _power);
+
+        // check if user invite me
+        require(
+            _whoInviteMe != msg.sender && !allPlayers[msg.sender],
+            "not fill invite condition"
+        );
+        allPlayers[msg.sender] = true;
+        if (_whoInviteMe != address(0)) {
+            userInvited[_whoInviteMe].push(msg.sender);
+            emit InviteSuccess(_whoInviteMe, msg.sender);
+        }
     }
 
     function coinCanClaim() public view returns (uint256) {
@@ -201,13 +267,6 @@ contract OCGTgame is Ownable {
         Player[] storage players = matchIdToPlayers[_matchId];
         players.push(Player(_ad, _matchId, _color, _lucky));
         // matchIdToPlayers[_matchId] = players;
-    }
-
-    function battleResult(uint256 _matchId) public returns (Player memory) {
-        Player[] memory players = matchIdToPlayers[_matchId];
-        Player memory winner = players[0];
-        matchIdToWinner[_matchId] = winner;
-        return winner;
     }
 
     /*******************************
