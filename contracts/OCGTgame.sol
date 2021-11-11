@@ -41,6 +41,7 @@ contract Ownable {
 contract OCGTgame is Ownable {
     OCGTtoken public token;
     bool canMintCoin;
+    uint256 mintGapSecond = 24 * 60 * 60;
 
     constructor() {
         token = new OCGTtoken();
@@ -67,13 +68,27 @@ contract OCGTgame is Ownable {
     mapping(uint256 => Player[]) matchIdToPlayers;
     mapping(uint256 => Player) matchIdToWinner;
     mapping(address => uint256) unClaimCoinInMint;
+    mapping(address => uint256) userMintStartTime;
+    mapping(address => address[]) userInvited;
 
     /*
     manager part
     */
 
-    function switchMint() public onlyOwner {
-        canMintCoin = !canMintCoin;
+    function changeMintGap(uint256 _gap) public onlyOwner {
+        mintGapSecond = _gap;
+    }
+
+    function switchMint(bool _canMint) public onlyOwner {
+        require(canMintCoin != _canMint, "already is this mint status");
+        canMintCoin = _canMint;
+    }
+
+    function approveAirdropToAddress(address _user, uint256 _amount)
+        public
+        onlyOwner
+    {
+        token.approve(_user, _amount);
     }
 
     function startNewMatch(
@@ -100,10 +115,23 @@ contract OCGTgame is Ownable {
     user part
     */
 
+    event MintCoin(address _user, uint256 _startTime, uint256 _power);
+
     function mintCoin(uint256 _power) public payable {
+        uint256 timeNow = block.timestamp;
         require(canMintCoin, "Can not mint yet");
         require(msg.value >= 0.001 ether, "value wrong");
+        require(
+            userMintStartTime[msg.sender] <= (timeNow - mintGapSecond),
+            "can not mint yet"
+        );
+        userMintStartTime[msg.sender] = timeNow;
         unClaimCoinInMint[msg.sender] += _power;
+        emit MintCoin(msg.sender, timeNow, _power);
+    }
+
+    function coinCanClaim() public view returns (uint256) {
+        return unClaimCoinInMint[msg.sender];
     }
 
     function claimMintCoin(uint256 _amount) public {
@@ -112,6 +140,7 @@ contract OCGTgame is Ownable {
             "pool not enough"
         );
         require(_amount <= unClaimCoinInMint[msg.sender], "your not enough");
+        unClaimCoinInMint[msg.sender] -= _amount;
         token.transfer(msg.sender, _amount);
     }
 

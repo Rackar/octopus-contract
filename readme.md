@@ -22,3 +22,7 @@ address(this) 本合约地址
 文档： https://ethereum.org/en/developers/tutorials/transfers-and-approval-of-erc-20-tokens-from-a-solidity-smart-contract/
 
 通过constructor 初始化ERC20代币合约，合约持有者为当前合约。
+
+mint时可提取数字直接变化，但要24小时后才能claim
+
+前端用已变后数字，然后查询事件是否在24小时内有mint，减掉power然后根据时间递增
