@@ -73,9 +73,9 @@ contract OCGTgame is Ownable {
 
     mapping(address => uint256) ethBalance;
 
-    /*
+    /*******************************
     payable part
-    */
+    *******************************/
 
     function deposit() public payable {
         // require(msg.value >= 0);
@@ -86,17 +86,19 @@ contract OCGTgame is Ownable {
 
     function withdraw() public {
         // payable(msg.sender, token.balanceOf(msg.sender));
-        payable(msg.sender).transfer(ethBalance(msg.sender));
+        uint256 _value = ethBalance[msg.sender];
+        require(_value > 0, "no balance");
         ethBalance[msg.sender] = 0;
+        payable(msg.sender).transfer(_value);
     }
 
     function balance() public view returns (uint256) {
         return address(this).balance;
     }
 
-    /*
+    /*******************************
     manager part
-    */
+    *******************************/
 
     function changeMintGap(uint256 _gap) public onlyOwner {
         mintGapSecond = _gap;
@@ -134,9 +136,9 @@ contract OCGTgame is Ownable {
         matches.push(currentMatch);
     }
 
-    /*
+    /*******************************
     user part
-    */
+    *******************************/
 
     event MintCoin(address _user, uint256 _startTime, uint256 _power);
 
@@ -208,9 +210,9 @@ contract OCGTgame is Ownable {
         return winner;
     }
 
-    /*
+    /*******************************
     test part
-    */
+    *******************************/
     function getBalance(address _user) public view returns (uint256) {
         return token.balanceOf(_user);
     }
