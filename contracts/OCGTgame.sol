@@ -200,24 +200,22 @@ contract OCGTgame is Ownable {
     function mintCoin(uint256 _power, address _whoInviteMe) public payable {
         uint256 timeNow = block.timestamp;
         require(canMintCoin, "Can not mint yet");
-        require(msg.value >= 0.001 ether, "value wrong");
+        require(msg.value >= 0.001 ether, "the value be sended not enough");
         require(
             userMintStartTime[msg.sender] <= (timeNow - mintGapSecond),
-            "can not mint yet"
+            "you had mint yet, wait for gap end"
         );
         userMintStartTime[msg.sender] = timeNow;
         unClaimCoinInMint[msg.sender] += _power;
         emit MintCoin(msg.sender, timeNow, _power);
 
         // check if user invite me
-        require(
-            _whoInviteMe != msg.sender && !allPlayers[msg.sender],
-            "not fill invite condition"
-        );
-        allPlayers[msg.sender] = true;
-        if (_whoInviteMe != address(0)) {
-            userInvited[_whoInviteMe].push(msg.sender);
-            emit InviteSuccess(_whoInviteMe, msg.sender);
+        if (_whoInviteMe != msg.sender && !allPlayers[msg.sender]) {
+            allPlayers[msg.sender] = true;
+            if (_whoInviteMe != address(0)) {
+                userInvited[_whoInviteMe].push(msg.sender);
+                emit InviteSuccess(_whoInviteMe, msg.sender);
+            }
         }
     }
 
