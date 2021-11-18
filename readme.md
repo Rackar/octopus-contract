@@ -29,3 +29,8 @@ mint时可提取数字直接变化，但要24小时后才能claim
 
 
 0x0000000000000000000000000000000000000000
+
+https://docs.soliditylang.org/en/v0.8.10/contracts.html#events
+
+https://web3js.readthedocs.io/en/v1.5.2/web3-eth-contract.html#events
+

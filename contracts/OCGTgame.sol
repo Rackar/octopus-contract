@@ -195,7 +195,7 @@ contract OCGTgame is Ownable {
     user part
     *******************************/
 
-    event MintCoin(address _user, uint256 _startTime, uint256 _power);
+    event MintCoin(address user, uint256 startTime, uint256 power);
 
     function mintCoin(uint256 _power, address _whoInviteMe) public payable {
         uint256 timeNow = block.timestamp;
