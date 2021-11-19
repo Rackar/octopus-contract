@@ -134,8 +134,6 @@ contract OCGTgame is Ownable {
         string lucky
     );
 
-    event InviteSuccess(address invitingAddress, address invitedAddress);
-
     function changeMintGap(uint256 _gap) public onlyOwner {
         mintGapSecond = _gap;
     }
@@ -195,7 +193,11 @@ contract OCGTgame is Ownable {
     user part
     *******************************/
 
-    event MintCoin(address user, uint256 startTime, uint256 power);
+    event MintCoin(address indexed user, uint256 startTime, uint256 power);
+    event InviteSuccess(
+        address indexed invitingAddress,
+        address indexed invitedAddress
+    );
 
     function mintCoin(uint256 _power, address _whoInviteMe) public payable {
         uint256 timeNow = block.timestamp;
