@@ -199,7 +199,11 @@ contract OCGTgame is Ownable {
         address indexed invitedAddress
     );
 
-    function mintCoin(uint256 _power, address _whoInviteMe) public payable {
+    function mintCoin(uint256 _power, address _whoInviteMe)
+        public
+        payable
+        returns (bool)
+    {
         uint256 timeNow = block.timestamp;
         require(canMintCoin, "Can not mint yet");
         require(msg.value >= 0.001 ether, "the value be sended not enough");
@@ -219,6 +223,7 @@ contract OCGTgame is Ownable {
                 emit InviteSuccess(_whoInviteMe, msg.sender);
             }
         }
+        return true;
     }
 
     function coinCanClaim() public view returns (uint256) {
