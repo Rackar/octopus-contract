@@ -196,6 +196,7 @@ contract OCGTgame is Ownable {
     event MintCoin(address indexed user, uint256 startTime, uint256 power);
     event InviteSuccess(
         address indexed invitingAddress,
+        uint256 invitedCount,
         address indexed invitedAddress
     );
 
@@ -220,7 +221,11 @@ contract OCGTgame is Ownable {
             allPlayers[msg.sender] = true;
             if (_whoInviteMe != address(0)) {
                 userInvited[_whoInviteMe].push(msg.sender);
-                emit InviteSuccess(_whoInviteMe, msg.sender);
+                emit InviteSuccess(
+                    _whoInviteMe,
+                    userInvited[_whoInviteMe].length,
+                    msg.sender
+                );
             }
         }
         return true;
