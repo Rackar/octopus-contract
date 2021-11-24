@@ -34,3 +34,5 @@ https://docs.soliditylang.org/en/v0.8.10/contracts.html#events
 
 https://web3js.readthedocs.io/en/v1.5.2/web3-eth-contract.html#events
 
+需要调试已发布的合约，需要找回对应的代码，激活状态下输入atAddress，可以调试。
+
