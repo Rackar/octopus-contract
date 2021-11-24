@@ -231,8 +231,8 @@ contract OCGTgame is Ownable {
         return true;
     }
 
-    function coinCanClaim() public view returns (uint256) {
-        return unClaimCoinInMint[msg.sender];
+    function coinCanClaim(address _user) public view returns (uint256) {
+        return unClaimCoinInMint[_user];
     }
 
     function claimMintCoin(uint256 _amount) public {
