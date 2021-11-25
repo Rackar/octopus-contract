@@ -44,3 +44,7 @@ Hex	|Decimal|	Network
 0x4|	4|	Rinkeby Test Network
 0x5|	5|	Goerli Test Network
 0x2a|	42|	Kovan Test Network
+
+
+需要调试已发布的合约，需要找回对应的代码，激活状态下输入atAddress，可以调试。
+
