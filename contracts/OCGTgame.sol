@@ -44,8 +44,13 @@ contract OCGTgame is Ownable {
     uint256 mintGapSecond = 24 * 60 * 60;
 
     constructor() {
-        token = new OCGTtoken();
+        address tokenAddress = 0xE1002B13E4294f6e7981DC25B96520E724261133;
+        token = OCGTtoken(tokenAddress);
         canMintCoin = true;
+    }
+
+    function resetToken(address _token) public onlyOwner {
+        token = OCGTtoken(_token);
     }
 
     struct Player {
@@ -73,7 +78,7 @@ contract OCGTgame is Ownable {
     Match[] public matches;
     Match currentMatch;
 
-    mapping(address => bool) public allPlayers;
+    mapping(address => bool) public alreadyInPlayer;
     mapping(uint256 => Player[]) matchIdToPlayers;
     mapping(uint256 => Player) matchIdToWinner;
     mapping(address => uint256) unClaimCoinInMint;
@@ -217,8 +222,8 @@ contract OCGTgame is Ownable {
         emit MintCoin(msg.sender, timeNow, _power);
 
         // check if user invite me
-        if (_whoInviteMe != msg.sender && !allPlayers[msg.sender]) {
-            allPlayers[msg.sender] = true;
+        if (_whoInviteMe != msg.sender && !alreadyInPlayer[msg.sender]) {
+            alreadyInPlayer[msg.sender] = true;
             if (_whoInviteMe != address(0)) {
                 userInvited[_whoInviteMe].push(msg.sender);
                 emit InviteSuccess(
@@ -282,6 +287,10 @@ contract OCGTgame is Ownable {
     /*******************************
     test part
     *******************************/
+    function getTokenBalance() public view returns (uint256) {
+        return token.balanceOf(address(this));
+    }
+
     function getBalance(address _user) public view returns (uint256) {
         return token.balanceOf(_user);
     }
