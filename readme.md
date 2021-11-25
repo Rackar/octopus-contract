@@ -34,3 +34,13 @@ https://docs.soliditylang.org/en/v0.8.10/contracts.html#events
 
 https://web3js.readthedocs.io/en/v1.5.2/web3-eth-contract.html#events
 
+https://docs.metamask.io/guide/rpc-api.html#other-rpc-methods
+
+
+Hex	|Decimal|	Network
+-|-|-
+0x1|	1|	Ethereum Main Network (Mainnet)
+0x3|	3|	Ropsten Test Network
+0x4|	4|	Rinkeby Test Network
+0x5|	5|	Goerli Test Network
+0x2a|	42|	Kovan Test Network
