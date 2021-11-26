@@ -275,13 +275,11 @@ contract OCGTgame is Ownable {
         uint256 _matchId,
         string memory _color,
         string memory _lucky
-    ) public payable {
-        require(msg.value == 0.00001 ether);
-        address _ad = msg.sender;
-
+    ) public {
         Player[] storage players = matchIdToPlayers[_matchId];
-        players.push(Player(_ad, _matchId, _color, _lucky));
+        players.push(Player(msg.sender, _matchId, _color, _lucky));
         // matchIdToPlayers[_matchId] = players;
+        token.transferFrom(msg.sender, address(this), 500);
     }
 
     /*******************************
