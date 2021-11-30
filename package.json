@@ -4,7 +4,8 @@
   "main": "index.js",
   "license": "MIT",
   "scripts": {
-    "compile": "yarn hardhat compile"
+    "compile": "yarn hardhat compile",
+    "test": "yarn hardhat test"
   },
   "devDependencies": {
     "@nomiclabs/hardhat-ethers": "^2.0.2",
