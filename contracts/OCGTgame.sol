@@ -42,6 +42,7 @@ contract OCGTgame is Ownable {
     OCGTtoken public token;
     bool canMintCoin;
     uint256 mintGapSecond = 24 * 60 * 60;
+    uint256 coinExchangeRate = 1000000;
 
     constructor() {
         address tokenAddress = 0xE1002B13E4294f6e7981DC25B96520E724261133;
@@ -194,6 +195,10 @@ contract OCGTgame is Ownable {
         return winner;
     }
 
+    function changeCoinExchangeRate(uint256 _rate) external onlyOwner {
+        coinExchangeRate = _rate;
+    }
+
     /*******************************
     user part
     *******************************/
@@ -205,14 +210,22 @@ contract OCGTgame is Ownable {
         address indexed invitedAddress
     );
 
+    function buyCoin() external payable {
+        require(msg.value >= 0.001 ether, "value not enough");
+        require(
+            coinExchangeRate * msg.value <= token.balanceOf(address(this)),
+            "pool not enough"
+        );
+        token.transfer(msg.sender, coinExchangeRate * msg.value);
+    }
+
     function mintCoin(uint256 _power, address _whoInviteMe)
-        public
-        payable
+        external
         returns (bool)
     {
         uint256 timeNow = block.timestamp;
         require(canMintCoin, "Can not mint yet");
-        require(msg.value >= 0.001 ether, "the value be sended not enough");
+        // require(msg.value >= 0.001 ether, "the value be sended not enough");
         require(
             userMintStartTime[msg.sender] <= (timeNow - mintGapSecond),
             "you had mint yet, wait for gap end"
@@ -278,8 +291,8 @@ contract OCGTgame is Ownable {
     ) public {
         Player[] storage players = matchIdToPlayers[_matchId];
         players.push(Player(msg.sender, _matchId, _color, _lucky));
-        // matchIdToPlayers[_matchId] = players;
-        token.transferFrom(msg.sender, address(this), 500);
+        matchIdToPlayers[_matchId] = players;
+        // token.transferFrom(msg.sender, address(this), 500); //测试是否传输报错
     }
 
     /*******************************
