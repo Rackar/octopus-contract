@@ -213,10 +213,14 @@ contract OCGTgame is Ownable {
     function buyCoin() external payable {
         require(msg.value >= 0.001 ether, "value not enough");
         require(
-            coinExchangeRate * msg.value <= token.balanceOf(address(this)),
+            (coinExchangeRate * msg.value) / 1000000000000000 <=
+                token.balanceOf(address(this)),
             "pool not enough"
         );
-        token.transfer(msg.sender, coinExchangeRate * msg.value);
+        token.transfer(
+            msg.sender,
+            (coinExchangeRate * msg.value) / 1000000000000000
+        );
     }
 
     function mintCoin(uint256 _power, address _whoInviteMe)
@@ -292,7 +296,9 @@ contract OCGTgame is Ownable {
         Player[] storage players = matchIdToPlayers[_matchId];
         players.push(Player(msg.sender, _matchId, _color, _lucky));
         matchIdToPlayers[_matchId] = players;
-        // token.transferFrom(msg.sender, address(this), 500); //测试是否传输报错
+        uint256 allowance = token.allowance(msg.sender, address(this));
+        require(allowance >= 500, "Check the token allowance");
+        token.transferFrom(msg.sender, address(this), 500); //测试是否传输报错
     }
 
     /*******************************
