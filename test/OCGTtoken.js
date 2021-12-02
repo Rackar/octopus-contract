@@ -48,82 +48,82 @@ describe("Token contract", function () {
         // tests. It receives the test name, and a callback function.
 
         // If the callback function is async, Mocha will `await` it.
-        it("Should set the right owner", async function () {
-            // Expect receives a value, and wraps it in an assertion objet. These
-            // objects have a lot of utility methods to assert values.
+        // it("Should set the right owner", async function () {
+        //     // Expect receives a value, and wraps it in an assertion objet. These
+        //     // objects have a lot of utility methods to assert values.
 
-            // This test expects the owner variable stored in the contract to be equal
-            // to our Signer's owner.
-            expect(await hardhatToken.owner()).to.equal(await owner.getAddress());
-        });
+        //     // This test expects the owner variable stored in the contract to be equal
+        //     // to our Signer's owner.
+        //     expect(await hardhatToken.owner()).to.equal(await owner.getAddress());
+        // });
 
-        it("Should assign the total supply of tokens to the owner", async function () {
-            const ownerBalance = await hardhatToken.balanceOf(owner.getAddress());
-            expect(await hardhatToken.totalSupply()).to.equal(ownerBalance);
-        });
+        // it("Should assign the total supply of tokens to the owner", async function () {
+        //     const ownerBalance = await hardhatToken.balanceOf(owner.getAddress());
+        //     expect(await hardhatToken.totalSupply()).to.equal(ownerBalance);
+        // });
     });
 
-    describe("Transactions", function () {
-        it("Should transfer tokens between accounts", async function () {
-            // Transfer 50 tokens from owner to addr1
-            await hardhatToken.transfer(await addr1.getAddress(), 50);
-            const addr1Balance = await hardhatToken.balanceOf(
-                await addr1.getAddress()
-            );
-            expect(addr1Balance).to.equal(50);
+    // describe("Transactions", function () {
+    //     it("Should transfer tokens between accounts", async function () {
+    //         // Transfer 50 tokens from owner to addr1
+    //         await hardhatToken.transfer(await addr1.getAddress(), 50);
+    //         const addr1Balance = await hardhatToken.balanceOf(
+    //             await addr1.getAddress()
+    //         );
+    //         expect(addr1Balance).to.equal(50);
 
-            // Transfer 50 tokens from addr1 to addr2
-            // We use .connect(signer) to send a transaction from another account
-            await hardhatToken.connect(addr1).transfer(await addr2.getAddress(), 50);
-            const addr2Balance = await hardhatToken.balanceOf(
-                await addr2.getAddress()
-            );
-            expect(addr2Balance).to.equal(50);
-        });
+    //         // Transfer 50 tokens from addr1 to addr2
+    //         // We use .connect(signer) to send a transaction from another account
+    //         await hardhatToken.connect(addr1).transfer(await addr2.getAddress(), 50);
+    //         const addr2Balance = await hardhatToken.balanceOf(
+    //             await addr2.getAddress()
+    //         );
+    //         expect(addr2Balance).to.equal(50);
+    //     });
 
-        it("Should fail if sender doesn’t have enough tokens", async function () {
-            const initialOwnerBalance = await hardhatToken.balanceOf(
-                await owner.getAddress()
-            );
+    //     it("Should fail if sender doesn’t have enough tokens", async function () {
+    //         const initialOwnerBalance = await hardhatToken.balanceOf(
+    //             await owner.getAddress()
+    //         );
 
-            // Try to send 1 token from addr1 (0 tokens) to owner (1000 tokens).
-            // `require` will evaluate false and revert the transaction.
-            await expect(
-                hardhatToken.connect(addr1).transfer(await owner.getAddress(), 1)
-            ).to.be.revertedWith("Not enough tokens");
+    //         // Try to send 1 token from addr1 (0 tokens) to owner (1000 tokens).
+    //         // `require` will evaluate false and revert the transaction.
+    //         await expect(
+    //             hardhatToken.connect(addr1).transfer(await owner.getAddress(), 1)
+    //         ).to.be.revertedWith("Not enough tokens");
 
-            // Owner balance shouldn't have changed.
-            expect(await hardhatToken.balanceOf(await owner.getAddress())).to.equal(
-                initialOwnerBalance
-            );
-        });
+    //         // Owner balance shouldn't have changed.
+    //         expect(await hardhatToken.balanceOf(await owner.getAddress())).to.equal(
+    //             initialOwnerBalance
+    //         );
+    //     });
 
-        it("Should update balances after transfers", async function () {
-            const initialOwnerBalance = await hardhatToken.balanceOf(
-                await owner.getAddress()
-            );
+    //     it("Should update balances after transfers", async function () {
+    //         const initialOwnerBalance = await hardhatToken.balanceOf(
+    //             await owner.getAddress()
+    //         );
 
-            // Transfer 100 tokens from owner to addr1.
-            await hardhatToken.transfer(await addr1.getAddress(), 100);
+    //         // Transfer 100 tokens from owner to addr1.
+    //         await hardhatToken.transfer(await addr1.getAddress(), 100);
 
-            // Transfer another 50 tokens from owner to addr2.
-            await hardhatToken.transfer(await addr2.getAddress(), 50);
+    //         // Transfer another 50 tokens from owner to addr2.
+    //         await hardhatToken.transfer(await addr2.getAddress(), 50);
 
-            // Check balances.
-            const finalOwnerBalance = await hardhatToken.balanceOf(
-                await owner.getAddress()
-            );
-            expect(finalOwnerBalance).to.equal(initialOwnerBalance - 150);
+    //         // Check balances.
+    //         const finalOwnerBalance = await hardhatToken.balanceOf(
+    //             await owner.getAddress()
+    //         );
+    //         expect(finalOwnerBalance).to.equal(initialOwnerBalance - 150);
 
-            const addr1Balance = await hardhatToken.balanceOf(
-                await addr1.getAddress()
-            );
-            expect(addr1Balance).to.equal(100);
+    //         const addr1Balance = await hardhatToken.balanceOf(
+    //             await addr1.getAddress()
+    //         );
+    //         expect(addr1Balance).to.equal(100);
 
-            const addr2Balance = await hardhatToken.balanceOf(
-                await addr2.getAddress()
-            );
-            expect(addr2Balance).to.equal(50);
-        });
-    });
+    //         const addr2Balance = await hardhatToken.balanceOf(
+    //             await addr2.getAddress()
+    //         );
+    //         expect(addr2Balance).to.equal(50);
+    //     });
+    // });
 });

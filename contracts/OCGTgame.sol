@@ -1,6 +1,7 @@
 pragma solidity ^0.8.3;
 
 // SPDX-License-Identifier: MIT
+import "@chainlink/contracts/src/v0.8/VRFConsumerBase.sol";
 import "./OCGTtoken.sol";
 
 contract Ownable {
@@ -38,13 +39,267 @@ contract Ownable {
     }
 }
 
-contract OCGTgame is Ownable {
+contract OCGTgame is Ownable, VRFConsumerBase {
+    /***************
+     * ChainLink part
+     *****************/
+
+    bytes32 internal keyHash;
+    uint256 internal fee;
+
+    mapping(bytes32 => uint256) public randomResults;
+
+    /**
+     * Requests randomness
+     */
+    function getRandomNumber() public returns (bytes32 requestId) {
+        require(
+            LINK.balanceOf(address(this)) >= fee,
+            "Not enough LINK - fill contract with faucet"
+        );
+        return requestRandomness(keyHash, fee);
+    }
+
+    function getRandomOneInTen(uint256 randomness)
+        internal
+        pure
+        returns (uint256)
+    {
+        return randomness % 10;
+    }
+
+    function getRandomOneInThree(uint256 randomness)
+        internal
+        pure
+        returns (uint256)
+    {
+        return randomness % 3;
+    }
+
+    function expand(uint256 randomValue, uint256 n)
+        public
+        pure
+        returns (uint256[] memory expandedValues)
+    {
+        expandedValues = new uint256[](n);
+        for (uint256 i = 0; i < n; i++) {
+            expandedValues[i] = uint256(keccak256(abi.encode(randomValue, i)));
+        }
+        return expandedValues;
+    }
+
+    /**
+     * Callback function used by VRF Coordinator
+     */
+    function fulfillRandomness(bytes32 requestId, uint256 randomness)
+        internal
+        override
+    {
+        randomResults[requestId] = randomness;
+    }
+
+    function toBytes(uint256 x) internal pure returns (bytes memory b) {
+        b = new bytes(32);
+        assembly {
+            mstore(add(b, 32), x)
+        }
+    }
+
+    function getMatchResultPlayers(uint256 _matchId)
+        internal
+        view
+        returns (
+            Player[] memory,
+            Player[] memory,
+            Player[] memory
+        )
+    {
+        uint256[] memory randoms = expand(randomResults[bytes32(_matchId)], 3);
+        uint256 randomOneInTen = getRandomOneInTen(randoms[0]);
+        uint256 randomOneInThree = getRandomOneInThree(randoms[1]);
+        Player[] memory players = matchIdToPlayers[_matchId];
+
+        uint256 resultCount;
+        uint256 colorCount;
+        uint256 luckyCount;
+
+        for (uint256 i = 0; i < players.length; i++) {
+            Player memory player = players[i];
+            if (
+                checkColor(randomOneInThree, player.color) &&
+                checkLucky(randomOneInTen, player.lucky)
+            ) {
+                resultCount++;
+            } else if (
+                checkColor(randomOneInThree, player.color) &&
+                !checkLucky(randomOneInTen, player.lucky)
+            ) {
+                colorCount++;
+            } else if (
+                !checkColor(randomOneInThree, player.color) &&
+                checkLucky(randomOneInTen, player.lucky)
+            ) {
+                luckyCount++;
+            }
+        }
+
+        Player[] memory result = new Player[](resultCount); // step 2 - create the fixed-length array
+        Player[] memory resultColor = new Player[](colorCount); // step 2 - create the fixed-length array
+        Player[] memory resultLucky = new Player[](luckyCount); // step 2 - create the fixed-length array
+        uint256 j;
+        uint256 k;
+        uint256 m;
+
+        for (uint256 i = 0; i < players.length; i++) {
+            Player memory player = players[i];
+
+            if (
+                checkColor(randomOneInThree, player.color) &&
+                checkLucky(randomOneInTen, player.lucky)
+            ) {
+                result[j] = players[i];
+                j++;
+            } else if (
+                checkColor(randomOneInThree, player.color) &&
+                !checkLucky(randomOneInTen, player.lucky)
+            ) {
+                resultColor[k] = players[i];
+                k++;
+            } else if (
+                !checkColor(randomOneInThree, player.color) &&
+                checkLucky(randomOneInTen, player.lucky)
+            ) {
+                resultLucky[m] = players[i];
+                m++;
+            }
+        }
+
+        return (result, resultColor, resultLucky); // step 4 - return
+    }
+
+    function checkColor(uint256 x, string memory color)
+        public
+        pure
+        returns (bool)
+    {
+        if (
+            x == 0 &&
+            keccak256(abi.encodePacked(color)) ==
+            keccak256(abi.encodePacked("red"))
+        ) {
+            return true;
+        } else if (
+            x == 1 &&
+            keccak256(abi.encodePacked(color)) ==
+            keccak256(abi.encodePacked("green"))
+        ) {
+            return true;
+        } else if (
+            x == 2 &&
+            keccak256(abi.encodePacked(color)) ==
+            keccak256(abi.encodePacked("blue"))
+        ) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    // parseInt
+    // function parseInt(string memory _a) public pure returns (uint256) {
+    //     return parseInt(_a, 0);
+    // }
+
+    // // parseInt(parseFloat*10^_b)
+    // function parseInt(string memory _a, uint256 _b)
+    //     public
+    //     pure
+    //     returns (uint256)
+    // {
+    //     bytes memory bresult = bytes(_a);
+    //     uint256 mint = 0;
+    //     bool decimals = false;
+    //     for (uint256 i = 0; i < bresult.length; i++) {
+    //         if ((bresult[i] >= 48) && (bresult[i] <= 57)) {
+    //             if (decimals) {
+    //                 if (_b == 0) break;
+    //                 else _b--;
+    //             }
+    //             mint *= 10;
+    //             mint += uint256(bresult[i]) - 48;
+    //         } else if (bresult[i] == 46) decimals = true;
+    //     }
+    //     if (_b > 0) mint *= 10**_b;
+    //     return mint;
+    // }
+
+    function checkLucky(uint256 luckyNumber, string memory lucky)
+        public
+        pure
+        returns (bool)
+    {
+        if (
+            keccak256(abi.encodePacked(bytes(lucky))) ==
+            keccak256(abi.encodePacked(bytes32(luckyNumber)))
+        ) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    function getMatchResult(uint256 _matchId) public {
+        uint256[] memory randoms = expand(randomResults[bytes32(_matchId)], 3);
+        uint256 randomOneInTen = getRandomOneInTen(randoms[0]);
+        uint256 randomOneInThree = getRandomOneInThree(randoms[1]);
+        Player[] memory players = matchIdToPlayers[_matchId];
+        uint256[] memory winners;
+
+        for (uint256 i = 0; i < players.length; i++) {
+            Player memory player = players[i];
+            if (
+                checkColor(randomOneInThree, player.color) &&
+                checkLucky(randomOneInTen, player.lucky)
+            ) {
+                rewordWinner(player.userAddress);
+            } else if (
+                checkColor(randomOneInThree, player.color) &&
+                !checkLucky(randomOneInTen, player.lucky)
+            ) {
+                rewordWinnerColor(player.userAddress);
+            } else if (
+                !checkColor(randomOneInThree, player.color) &&
+                checkLucky(randomOneInTen, player.lucky)
+            ) {
+                rewordWinnerLucky(player.userAddress);
+            }
+        }
+    }
+
+    function rewordWinner(address _userAddress) internal {}
+
+    function rewordWinnerColor(address _userAddress) internal {}
+
+    function rewordWinnerLucky(address _userAddress) internal {}
+
+    /***************
+     * data struct part
+     *****************/
+
     OCGTtoken public token;
     bool canMintCoin;
     uint256 mintGapSecond = 24 * 60 * 60;
     uint256 coinExchangeRate = 1000000;
 
-    constructor() {
+    constructor()
+        VRFConsumerBase(
+            0xdD3782915140c8f3b190B5D67eAc6dc5760C46E9, // VRF Coordinator
+            0xa36085F69e2889c224210F603D836748e7dC0088 // LINK Token
+        )
+    {
+        keyHash = 0x6c3699283bda56ad74f6b855546325b68d482e983852a7a82979cc4807b641f4;
+        fee = 0.1 * 10**18; // 0.1 LINK (Varies by network)
+
         address tokenAddress = 0xE1002B13E4294f6e7981DC25B96520E724261133;
         token = OCGTtoken(tokenAddress);
         canMintCoin = true;
