@@ -54,7 +54,7 @@ describe("Game contract", function () {
 
             // This test expects the owner variable stored in the contract to be equal
             // to our Signer's owner.
-            console.log(bytes('1'), bytes32(1));
+            console.log(bytes32('1'), bytes32(1));
             expect(await hardhatToken.checkLucky(1, '1')).to.equal(true);
             // expect(await hardhatToken.checkLucky(1, '2')).to.equal(false);
             // expect(await hardhatToken.checkLucky(0, '0')).to.equal(true);
